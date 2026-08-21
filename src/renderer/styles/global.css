@@ -90,6 +90,10 @@ body {
 }
 .title-logo {
   flex: 0 0 auto;
+  /* 视觉垂直居中修正：flex 居中的是行盒几何中心，而文字字形墨迹中心
+     比其低 2px（Segoe UI 字体度量，实测），下移 logo 补偿该偏差。
+     使用 transform 不改变布局结构与间距。 */
+  transform: translateY(2px);
 }
 .title-actions {
   display: flex;

@@ -113,12 +113,15 @@ npx electron-builder --mac   # 仅 macOS 上可用，产出 dmg + zip
 |---|---|---|
 | win | NSIS | 向导式安装、可选目录、per-user；`signAndEditExecutable: false`（跳过 exe 图标注入，见下） |
 | mac | dmg + zip | `identity: null` 跳过签名；图标用 `assets/icon.png` 自动转 icns |
+| linux | AppImage + deb | 需在 Linux 上构建；图标用 `assets/icon.png`，deb hicolor 用 `icon-512.png` |
+
+所有平台图标统一为 **₿ 金色徽章**（金色径向渐变圆面 + 暗棕 ₿ 字形），由 `scripts/make-icon.mjs` 一键生成，运行时托盘图标（`src/main/tray.ts`）与标题栏 logo（`MiniWindow.tsx` 内联 SVG）同源同几何。
 
 ### 打包相关脚本
 
 | 脚本 | 用途 |
 |---|---|
-| `scripts/make-icon.mjs` | 生成 `assets/icon.ico`（win）与 `icon.png` 1024²（mac） |
+| `scripts/make-icon.mjs` | 生成 ₿ 徽章图标：`assets/icon.ico`（win，16–256 多尺寸抗锯齿）与 `icon.png` 1024²（mac）/ `icon-512.png`（linux） |
 | `scripts/fix-vite-crypto.cjs` | 修 Vite 5.4 在 Node<19 的 `crypto.getRandomValues` 报错（幂等） |
 | `scripts/run-electron.cjs` | electron 启动包装：清 `ELECTRON_RUN_AS_NODE`/`NODE_OPTIONS` 等破坏性环境变量 |
 | `scripts/smoke-ranking.cjs` / `smoke-mcap.cjs` / `test-data.cjs` | 数据源冒烟测试（真实网络请求验证榜单/市值/快照） |

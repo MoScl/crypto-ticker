@@ -42,7 +42,7 @@
     "build": "build:main && build:renderer",
     "dist": "build + electron-builder",
     "typecheck": "tsc --noEmit (含 i18n 同构校验)",
-    "make-icon": "生成 assets/icon.ico + icon.png"
+    "make-icon": "生成 ₿ 金色徽章图标：assets/icon.ico (win 16-256) + icon.png 1024 (mac) + icon-512.png (linux)"
   },
   "features": [
     "无边框透明置顶悬浮窗（透明度 0.3-1.0、可拖拽、右下角缩放、尺寸持久化）",
@@ -77,6 +77,7 @@
   "build": {
     "win": "NSIS 向导式安装包（release/CryptoTicker Setup x.x.x.exe），signAndEditExecutable:false",
     "mac": "dmg + zip，identity:null 跳过签名，需在 macOS 上构建",
-    "icons": "assets/icon.ico (win) + assets/icon.png 1024x1024 (mac 自动转 icns)"
+    "linux": "AppImage + deb，需在 Linux 上构建",
+    "icons": "₿ 金色徽章：assets/icon.ico (win 16-256 多尺寸) + assets/icon.png 1024x1024 (mac 自动转 icns) + assets/icon-512.png (linux)；托盘图标由 src/main/tray.ts 运行时同几何渲染"
   }
 }

@@ -108,10 +108,10 @@ crypto-ticker/
 ├── src/                  # 源码（见上表）
 ├── scripts/              # make-icon.mjs / fix-vite-crypto.cjs / run-electron.cjs / smoke-*.cjs
 ├── patches/              # vite+5.4.21.patch (Node<19 crypto polyfill, postinstall 自动应用)
-├── assets/               # icon.ico (win) / icon.png 1024 (mac)
+├── assets/               # ₿ 金色徽章图标：icon.ico (win 16-256) / icon.png 1024 (mac) / icon-512.png (linux)
 ├── dist/main/            # tsc 产物（index.js + preload.js）
 ├── dist/renderer/        # vite 产物（index.html + assets/*)
 ├── release/              # electron-builder 产物（win-unpacked/ + CryptoTicker Setup x.x.x.exe）
-├── electron-builder.yml  # 打包配置（win NSIS + mac dmg/zip）
+├── electron-builder.yml  # 打包配置（win NSIS + mac dmg/zip + linux AppImage/deb）
 └── run.bat               # Windows 一键启动脚本
 ```

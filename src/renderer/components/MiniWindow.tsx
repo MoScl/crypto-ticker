@@ -135,11 +135,30 @@ export function MiniWindow() {
             viewBox="0 0 44 44"
             aria-label="Crypto"
           >
-            <path d="M22 4 L37 16 L22 41 L7 16 Z" fill="#1D9E75" />
-            <path d="M22 4 L37 16 L22 41 Z" fill="#0F6E56" />
-            <path d="M22 4 L22 41 L7 16 Z" fill="#0F6E56" />
-            <path d="M14 16 L22 4 L30 16 L22 16 Z" fill="#9FE1CB" />
-            <path d="M14 16 L22 16 L22 25 L10 16 Z" fill="#5DCAA5" />
+            <defs>
+              <radialGradient id="badge-gold" cx="0.35" cy="0.28" r="0.95">
+                <stop offset="0" stopColor="#FFD25E" />
+                <stop offset="0.55" stopColor="#F6B73C" />
+                <stop offset="1" stopColor="#DD9A00" />
+              </radialGradient>
+            </defs>
+            <circle cx="22" cy="22" r="19.4" fill="url(#badge-gold)" stroke="#B97E00" strokeWidth="1.4" />
+            <g fill="#5C3D00">
+              {/* ₿ 字形：竖干 */}
+              <rect x="16.5" y="13.2" width="3.6" height="17.6" />
+              {/* 上/下双刻线 */}
+              <rect x="12.9" y="10.6" width="2.6" height="4.2" />
+              <rect x="14.7" y="10.6" width="2.6" height="4.2" />
+              <rect x="12.9" y="29.3" width="2.6" height="4.2" />
+              <rect x="14.7" y="29.3" width="2.6" height="4.2" />
+              {/* 上/中/下横杠 */}
+              <rect x="16.5" y="13.7" width="8" height="3.4" />
+              <rect x="16.5" y="22.3" width="6.7" height="3.1" />
+              <rect x="16.5" y="27.5" width="9" height="3.3" />
+              {/* 右侧双环（上半环 + 下半环） */}
+              <path d="M24.7 14.3 A5.2 5.2 0 0 1 24.7 24.7 L24.7 22 A2.5 2.5 0 0 0 24.7 17.1 Z" />
+              <path d="M25.5 19.9 A5.6 5.6 0 0 1 25.5 31.1 L25.5 28.2 A2.7 2.7 0 0 0 25.5 22.8 Z" />
+            </g>
           </svg>
           Crypto
         </span>

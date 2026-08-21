@@ -82,7 +82,7 @@ crypto-ticker/
 ├── doc/                 # 人类阅读文档（本文档/用户手册/开发指南/设计文档）
 ├── scripts/             # 图标生成、Vite 兼容修复、启动包装、冒烟测试
 ├── patches/             # patch-package 补丁（Vite Node<19 crypto 问题）
-├── assets/              # 应用图标（icon.ico / icon.png）
+├── assets/              # 应用图标（₿ 金色徽章：icon.ico / icon.png / icon-512.png）
 ├── electron-builder.yml # 打包配置
 └── run.bat              # Windows 一键启动
 ```

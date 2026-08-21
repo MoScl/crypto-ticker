@@ -39,6 +39,17 @@ mac:
   # 或设置环境变量 CSC_LINK / CSC_KEY_PASSWORD 即可自动签名+公证）
   identity: null
 
+# ===== Linux 应用包（AppImage + deb）=====
+# Linux 构建需在 Linux 机器上执行：npx electron-builder --linux
+# AppImage 用 icon.png（512px 以上均可，electron-builder 自动缩放）；
+# deb 的 hicolor 图标用 icon-512.png。
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: assets/icon.png
+  category: Utility
+
 # ===== 代码签名（对外分发才需要）=====
 # 未签名时，Win10/11 首次运行会弹出 SmartScreen“未知发布者”，用户点“仍要运行”即可。
 # 若要消除警告，购买 EV 代码签名证书后，在下方填入对应字段（或设环境变量），再 `npm run dist`：
