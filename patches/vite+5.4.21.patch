@@ -1,0 +1,22 @@
+diff --git a/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js b/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js
+index 7992b2f..7de1bbe 100644
+--- a/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js
++++ b/node_modules/vite/dist/node/chunks/dep-BK3b2jBa.js
+@@ -6,7 +6,16 @@ import { fileURLToPath, URL as URL$3, parse as parse$h, pathToFileURL } from 'no
+ import { promisify as promisify$4, format as format$2, inspect } from 'node:util';
+ import { performance as performance$1 } from 'node:perf_hooks';
+ import { createRequire as createRequire$1, builtinModules } from 'node:module';
+-import crypto$2, { createHash as createHash$2 } from 'node:crypto';
++import __viteNodeCrypto, { createHash as createHash$2 } from 'node:crypto';
++const crypto$2 = Object.create(__viteNodeCrypto);
++if (__viteNodeCrypto.webcrypto) {
++  Object.defineProperty(crypto$2, 'getRandomValues', {
++    value: __viteNodeCrypto.webcrypto.getRandomValues.bind(__viteNodeCrypto.webcrypto),
++    writable: true,
++    configurable: true,
++    enumerable: false,
++  });
++}
+ import require$$0$3 from 'tty';
+ import require$$0$4, { win32, posix, isAbsolute, resolve as resolve$3, relative as relative$1, basename as basename$1, extname, dirname as dirname$1, join as join$1, sep as sep$1, normalize as normalize$1 } from 'path';
+ import esbuild, { transform as transform$1, formatMessages, build as build$3 } from 'esbuild';

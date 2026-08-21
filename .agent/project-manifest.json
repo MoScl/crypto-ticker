@@ -1,0 +1,82 @@
+{
+  "project": {
+    "name": "crypto-ticker",
+    "displayName": "CryptoTicker",
+    "version": "0.1.0",
+    "description": "桌面加密货币价格监控悬浮窗：无边框透明置顶小窗，多源实时行情 + 一键跳转交易所",
+    "license": "MIT",
+    "type": "desktop-app",
+    "platforms": ["win32 (NSIS 已验证)", "darwin (配置就绪，需在 macOS 构建)"]
+  },
+  "techStack": {
+    "runtime": "Electron 30.x (Chromium + Node)",
+    "ui": "React 18 + TypeScript 5.5",
+    "bundler": "Vite 5 (renderer) / tsc (main)",
+    "state": "Zustand 4",
+    "persistence": "electron-store 8",
+    "network": {
+      "websocket": "ws 8 (Binance 实时流)",
+      "http": "Node net/https + HttpsProxyAgent 5 (自研 rawRequest，非 axios)",
+      "dns": "DoH (doh.pub / alidns) 绕过本地 DNS 劫持"
+    },
+    "i18n": "自研零依赖 i18n (I18nProvider + useI18n, zh/en 双语言包)"
+  },
+  "entryPoints": {
+    "main": "src/main/index.ts -> dist/main/index.js",
+    "preload": "src/main/preload.ts (contextIsolation, nodeIntegration: false)",
+    "renderer": "src/renderer/index.html -> vite 构建到 dist/renderer/"
+  },
+  "sourceLayout": {
+    "src/shared": "主/渲染进程共享：types.ts (类型+默认配置), constants.ts (IPC 通道名+常量)",
+    "src/main": "主进程：窗口/托盘/IPC/点击穿透轮询/网络出口路由/行情调度",
+    "src/main/data": "行情数据源：dataSource.ts 调度中心 + 各交易所适配器",
+    "src/main/net": "智能出口路由器：egress.ts + doh.ts + systemProxy.ts + rawRequest.ts",
+    "src/renderer": "React UI：MiniWindow/CoinRow/AddCoinModal/SettingsPanel 等组件",
+    "src/renderer/i18n": "语言包 zh.ts / en.ts (en: typeof zh 编译期同构校验)",
+    "src/renderer/store": "zustand 全局状态 useAppStore",
+    "scripts": "构建辅助：图标生成/vite 修复/electron 启动包装/冒烟测试",
+    "patches": "patch-package 补丁：vite+5.4.21.patch (Node<19 crypto polyfill)"
+  },
+  "scripts": {
+    "dev": "三进程并行开发 (tsc -w + vite + electron)",
+    "build": "build:main && build:renderer",
+    "dist": "build + electron-builder",
+    "typecheck": "tsc --noEmit (含 i18n 同构校验)",
+    "make-icon": "生成 assets/icon.ico + icon.png"
+  },
+  "features": [
+    "无边框透明置顶悬浮窗（透明度 0.3-1.0、可拖拽、右下角缩放、尺寸持久化）",
+    "自选列表：增删、拖拽排序、多选批量操作",
+    "实时行情：Binance WS 推送 + REST 快照链容灾（OKX→Binance→Bybit→Gate→CoinGecko）",
+    "数据源手动指定或 auto 多源自动（含熔断冷却：连败 3 次冷却 120s）",
+    "计价币切换 USDT/USDC/FDUSD；刷新模式 realtime/poll（≥5s）",
+    "添加币种弹窗 7 榜：主流/热门/涨幅/跌幅/新币/市值/成交额 + 搜索",
+    "点击穿透 + 全局快捷键 Ctrl+Shift+X（主进程光标轮询实现穿透态按钮可交互）",
+    "系统托盘：显示/隐藏、穿透切换、退出；单实例锁",
+    "智能出口路由：配置代理→系统代理→本地端口扫描(7897/7890/...)→DoH 直连",
+    "网络诊断面板：在线/可达/降级/网卡/IPv4/当前出口/DNS 劫持检测",
+    "一键跳转交易所（域名白名单：binance/okx/gate/coingecko 等 12 域）",
+    "中英文界面切换（设置面板即时生效，electron-store 持久化）",
+    "开机自启（app.setLoginItemSettings）",
+    "高 DPI 适配（high-dpi-support=1）"
+  ],
+  "dataSources": {
+    "realtime": "Binance WebSocket (wss://stream.binance.com 逐交易对 miniTicker)",
+    "restChain": ["okx", "binance", "bybit", "gate", "coingecko"],
+    "trending": "CoinGecko /search/trending",
+    "rankings": {
+      "gainers": "OKX /api/v5/market/tickers 按 24h 涨幅降序 top15",
+      "losers": "OKX 同上按跌幅升序",
+      "new": "Gate.io /spot/currency_pairs 按 buy_start 降序（st_tag+后缀正则过滤杠杆币）",
+      "marketcap": "CoinGecko /coins/markets → 降级 CoinCap /assets",
+      "volume": "OKX 按 volCcy24h 降序"
+    },
+    "apiKey": "全部端点免 API key"
+  },
+  "globalShortcut": "CommandOrControl+Shift+X = 切换点击穿透",
+  "build": {
+    "win": "NSIS 向导式安装包（release/CryptoTicker Setup x.x.x.exe），signAndEditExecutable:false",
+    "mac": "dmg + zip，identity:null 跳过签名，需在 macOS 上构建",
+    "icons": "assets/icon.ico (win) + assets/icon.png 1024x1024 (mac 自动转 icns)"
+  }
+}

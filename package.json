@@ -1,0 +1,45 @@
+{
+  "name": "crypto-ticker",
+  "version": "0.1.0",
+  "description": "Windows 桌面加密货币价格监控悬浮窗 (Electron + React)",
+  "main": "dist/main/index.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "patch-package && node scripts/fix-vite-crypto.cjs",
+    "dev:main": "tsc -p tsconfig.main.json -w",
+    "dev:renderer": "node scripts/fix-vite-crypto.cjs && vite",
+    "dev:electron": "cross-env ELECTRON_RENDERER_URL=http://localhost:5173 wait-on tcp:5173 && node scripts/run-electron.cjs",
+    "dev": "concurrently -n main,renderer,electron -c blue,green,cyan \"npm:dev:main\" \"npm:dev:renderer\" \"npm:dev:electron\"",
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "build": "npm run build:main && npm run build:renderer",
+    "dist": "npm run build && electron-builder",
+    "make-icon": "node scripts/make-icon.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "https-proxy-agent": "^5.0.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.21.3",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/ws": "^8.18.1",
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^8.2.2",
+    "cross-env": "^7.0.3",
+    "electron": "^30.1.0",
+    "electron-builder": "^24.13.3",
+    "patch-package": "^8.0.1",
+    "tsx": "^4.16.2",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3",
+    "wait-on": "^7.2.0"
+  }
+}
