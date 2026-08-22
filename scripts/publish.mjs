@@ -37,6 +37,7 @@ const UPLOADS = `https://uploads.github.com/repos/${OWNER}/${REPO}`;
 const ASSETS = [
   { file: 'CryptoTicker-universal.dmg', from: 'CryptoTicker-*-universal.dmg' },
   { file: 'CryptoTicker-arm64-mac.zip', from: 'CryptoTicker-*-arm64-mac.zip' },
+  { file: 'CryptoTicker-Setup-0.1.0.exe', from: 'CryptoTicker Setup 0.1.0.exe' },
 ];
 
 const args = process.argv.slice(2);
@@ -146,6 +147,11 @@ function resolveAsset(asset) {
   if (files.includes(asset.file)) return path.join(dir, asset.file);
   // 2) 否则匹配打包产物通配（CryptoTicker-<version>-universal.dmg）
   const base = asset.from.replace(/\*/g, '').replace(/\.(dmg|zip)$/, '');
-  const match = files.find((f) => f.startsWith(base) && f.endsWith(asset.file.includes('dmg') ? '.dmg' : '.zip'));
+  const suffix = asset.file.toLowerCase().endsWith('.dmg')
+    ? '.dmg'
+    : asset.file.toLowerCase().endsWith('.zip')
+      ? '.zip'
+      : '.exe';
+  const match = files.find((f) => f.startsWith(base) && f.endsWith(suffix));
   return match ? path.join(dir, match) : null;
 }
