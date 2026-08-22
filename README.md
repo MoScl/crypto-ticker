@@ -34,6 +34,18 @@ Keeping a browser tab open for prices is heavy and distracting; most ticker tool
 
 > Note: price colors follow the convention used by Chinese exchanges — red = up, green = down.
 
+### Screenshots
+
+**Full window — search, toolbar, and status bar**
+The main view: ₿ logo + title bar, search box with discover/add shortcuts, toolbar (data source · copy · settings · minimize), and a bottom status bar showing last refresh time and current data source health.
+
+![Full window with title bar, search, toolbar and status bar](doc/images/window-full.png)
+
+**Minimal mode — watchlist only**
+Toggle to a distraction-free, ultra-compact view that hides the title bar, search and status bar — perfect for keeping an eye on prices in a screen corner.
+
+![Minimal mode showing only the watchlist and data source badge](doc/images/window-minimal.png)
+
 ## Download
 
 Prebuilt installers are available for Windows (NSIS setup) and macOS (dmg). The app is unsigned; on first launch, choose **More info → Run anyway** (Windows SmartScreen) or right-click → Open (macOS).

@@ -40,11 +40,21 @@ nsis:
 #   npx electron-builder --mac
 # icon 用 1024x1024 PNG，electron-builder 会经 iconutil 自动转 icns。
 mac:
+  # dmg 目标会同时产出 release/mac-universal/CryptoTicker.app 和 release/*.dmg
   target:
-    - dmg
-    - zip
+    - target: dmg
+      arch:
+        - universal   # arm64 + x86_64 合一的单个通用二进制
+    - zip             # zip 备用分发格式（同 universal）
   icon: assets/icon.png
   category: public.app-category.finance
+  # 最低支持 macOS 11 (Big Sur)——必须是字符串，数字会导致 LaunchServices 启动崩溃
+  minimumSystemVersion: "11.0"
+  # 签名相关（拿到证书后生效，未签名时无影响）：
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
   # 无 Apple 开发者证书时跳过签名（dmg 首次打开需右键 → 打开；有证书后删除此行
   # 或设置环境变量 CSC_LINK / CSC_KEY_PASSWORD 即可自动签名+公证）
   identity: null
@@ -59,6 +69,14 @@ linux:
     - deb
   icon: assets/icon.png
   category: Utility
+
+# ===== Apple 公证（Notarization）=====
+# 拿到 Apple Developer 账号后，设置以下环境变量再重新打包即可自动公证：
+#   APPLE_ID                    你的 Apple ID 邮箱
+#   APPLE_APP_SPECIFIC_PASSWORD App 专用密码（appleid.apple.com 生成）
+#   APPLE_TEAM_ID               开发者团队 ID（10 位）
+# 并将上方 mac.identity: null 删除（或改回 Developer ID Application 证书名）。
+# notarize: true   # <- 配齐凭据后取消注释
 
 # ===== 代码签名（对外分发才需要）=====
 # 未签名时，Win10/11 首次运行会弹出 SmartScreen“未知发布者”，用户点“仍要运行”即可。

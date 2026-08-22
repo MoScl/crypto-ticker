@@ -31,3 +31,9 @@ out/
 
 # Vite
 .vite/
+
+# WorkBuddy 工作区数据（会话记忆等，不纳入版本控制）
+.workbuddy/
+
+# 依赖锁文件（本地安装环境相关，不纳入版本控制）
+package-lock.json
