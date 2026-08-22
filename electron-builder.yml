@@ -9,15 +9,21 @@ directories:
 files:
   - dist/**/*
   - package.json
+  # 托盘图标（真实字体渲染，主进程运行时加载）：
+  # Windows 金色徽章 32px + @2x；macOS 黑色 Template 模板 16px + @2x
+  - assets/tray-icon.png
+  - assets/tray-icon@2x.png
+  - assets/tray-mac.png
+  - assets/tray-mac@2x.png
 
 # P9：Windows 安装包（NSIS）
 win:
   target: nsis
   # 应用图标（托盘图标由运行时生成，此处的 icon.ico 用于 exe/安装包）
   icon: assets/icon.ico
-  # 无管理员权限/沙箱环境无法解压 winCodeSign（包内含 darwin 符号链接，创建失败），
-  # 跳过 app exe 的图标/版本注入。NSIS 安装包图标不受影响（编译期指定）。
-  # 正常环境删除此行即可恢复自定义 exe 图标。
+  # 沙箱环境无 darwin 符号链接创建权限，winCodeSign 解压失败，
+  # 跳过 app exe 的图标/版本注入（安装包/快捷方式图标不受影响）。
+  # 正常环境删除此行即可恢复 exe 图标注入；也可在打包后手动 rcedit 注入。
   signAndEditExecutable: false
 
 nsis:

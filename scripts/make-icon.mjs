@@ -9,41 +9,31 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // ===== ₿ 字形几何（归一化坐标 u,v ∈ [0,1]，与 MiniWindow.tsx 的 SVG 字形同源）=====
+// 参考稿样式：描边式 "B"（空心碗）+ 碗内双竖线
 const GLYPH_RECTS = [
-  [0.30, 0.44, 0.16, 0.84], // 竖干
-  [0.16, 0.26, 0.06, 0.22], // 上刻线 1
-  [0.33, 0.43, 0.06, 0.22], // 上刻线 2
-  [0.16, 0.26, 0.78, 0.94], // 下刻线 1
-  [0.33, 0.43, 0.78, 0.94], // 下刻线 2
-  [0.30, 0.58, 0.18, 0.31], // 上横杠
-  [0.30, 0.53, 0.45, 0.57], // 中横杠
-  [0.30, 0.62, 0.69, 0.82], // 下横杠
-];
-const GLYPH_RINGS = [
-  { cx: 0.615, cy: 0.395, rO: 0.2, rI: 0.095, uMin: 0.4 }, // 上半环
-  { cx: 0.645, cy: 0.635, rO: 0.215, rI: 0.105, uMin: 0.4 }, // 下半环
+  [0.42, 0.52, 0.20, 0.72], // B 竖干
+  [0.21, 0.79, 0.20, 0.28], // B 顶横
+  [0.21, 0.60, 0.44, 0.52], // B 中横
+  [0.21, 0.79, 0.64, 0.72], // B 底横
+  [0.63, 0.71, 0.28, 0.44], // B 上碗右缘
+  [0.63, 0.71, 0.52, 0.64], // B 下碗右缘
+  [0.33, 0.41, 0.26, 0.72], // 左竖线
+  [0.58, 0.63, 0.26, 0.72], // 右竖线
 ];
 // 字形包围盒（用于在图标内居中）
-const GB = { x0: 0.16, x1: 0.86, y0: 0.06, y1: 0.94 };
+const GB = { x0: 0.16, x1: 0.84, y0: 0.08, y1: 0.92 };
 
 function glyphHit(u, v) {
   for (const [x0, x1, y0, y1] of GLYPH_RECTS) {
     if (u >= x0 && u <= x1 && v >= y0 && v <= y1) return true;
   }
-  for (const r of GLYPH_RINGS) {
-    if (u >= r.uMin) {
-      const d2 = (u - r.cx) ** 2 + (v - r.cy) ** 2;
-      if (d2 <= r.rO * r.rO && d2 >= r.rI * r.rI) return true;
-    }
-  }
   return false;
 }
 
 // ===== 徽章配色（与 SVG 一致）=====
-const RIM = [185, 126, 0]; // #B97E00 外圈描边
-const FACE_TOP = [255, 210, 94]; // #FFD25E 顶部高光
-const FACE_BOT = [232, 155, 0]; // #E89B00 底部
-const GLYPH = [92, 61, 0]; // #5C3D00 深棕 ₿
+const RIM = [255, 217, 138]; // #FFD98A 亮金描边
+const FACE = [246, 183, 60]; // #F6B73C 金色平底
+const GLYPH = [26, 26, 26]; // #1a1a1a 近黑 ₿
 
 /** 渲染一枚 ₿ 金色徽章 PNG（RGBA，透明底），ss = 每边超采样倍数 */
 function renderBadgePng(size, ss = 2) {
@@ -78,13 +68,9 @@ function renderBadgePng(size, ss = 2) {
           if (d > rFace) continue; // 透明
           let r, g, b;
           if (d > rInner) {
-            r = RIM[0]; g = RIM[1]; b = RIM[2]; // 外圈
+            r = RIM[0]; g = RIM[1]; b = RIM[2]; // 亮金描边
           } else {
-            // 金面：自上而下渐变
-            const t = Math.min(1, Math.max(0, dy / rInner));
-            r = Math.round(FACE_TOP[0] + (FACE_BOT[0] - FACE_TOP[0]) * t);
-            g = Math.round(FACE_TOP[1] + (FACE_BOT[1] - FACE_TOP[1]) * t);
-            b = Math.round(FACE_TOP[2] + (FACE_BOT[2] - FACE_TOP[2]) * t);
+            r = FACE[0]; g = FACE[1]; b = FACE[2]; // 金色平底
             // ₿ 字形覆盖
             if (glyphHit((px - ox) / scale, (py - oy) / scale)) {
               r = GLYPH[0]; g = GLYPH[1]; b = GLYPH[2];

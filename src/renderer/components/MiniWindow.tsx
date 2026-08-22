@@ -130,35 +130,27 @@ export function MiniWindow() {
         <span className="title">
           <svg
             className="title-logo"
-            width="13"
-            height="13"
+            width="16"
+            height="16"
             viewBox="0 0 44 44"
             aria-label="Crypto"
           >
-            <defs>
-              <radialGradient id="badge-gold" cx="0.35" cy="0.28" r="0.95">
-                <stop offset="0" stopColor="#FFD25E" />
-                <stop offset="0.55" stopColor="#F6B73C" />
-                <stop offset="1" stopColor="#DD9A00" />
-              </radialGradient>
-            </defs>
-            <circle cx="22" cy="22" r="19.4" fill="url(#badge-gold)" stroke="#B97E00" strokeWidth="1.4" />
-            <g fill="#5C3D00">
-              {/* ₿ 字形：竖干 */}
-              <rect x="16.5" y="13.2" width="3.6" height="17.6" />
-              {/* 上/下双刻线 */}
-              <rect x="12.9" y="10.6" width="2.6" height="4.2" />
-              <rect x="14.7" y="10.6" width="2.6" height="4.2" />
-              <rect x="12.9" y="29.3" width="2.6" height="4.2" />
-              <rect x="14.7" y="29.3" width="2.6" height="4.2" />
-              {/* 上/中/下横杠 */}
-              <rect x="16.5" y="13.7" width="8" height="3.4" />
-              <rect x="16.5" y="22.3" width="6.7" height="3.1" />
-              <rect x="16.5" y="27.5" width="9" height="3.3" />
-              {/* 右侧双环（上半环 + 下半环） */}
-              <path d="M24.7 14.3 A5.2 5.2 0 0 1 24.7 24.7 L24.7 22 A2.5 2.5 0 0 0 24.7 17.1 Z" />
-              <path d="M25.5 19.9 A5.6 5.6 0 0 1 25.5 31.1 L25.5 28.2 A2.7 2.7 0 0 0 25.5 22.8 Z" />
-            </g>
+            {/* 简化 ₿ 徽章：金色平底圆 + 亮金描边 + 深色 B 字与双竖线 */}
+            <circle cx="22" cy="22" r="20" fill="#F6B73C" />
+            <circle cx="22" cy="22" r="20" fill="none" stroke="#FFD98A" strokeWidth="1.5" />
+            <text
+              x="22"
+              y="30"
+              textAnchor="middle"
+              fontSize="26"
+              fontWeight="700"
+              fill="#1a1a1a"
+              fontFamily="Arial, Helvetica, sans-serif"
+            >
+              B
+            </text>
+            <rect x="16.8" y="13" width="2.6" height="19" fill="#1a1a1a" />
+            <rect x="25" y="13" width="2.6" height="19" fill="#1a1a1a" />
           </svg>
           Crypto
         </span>
@@ -181,7 +173,20 @@ export function MiniWindow() {
             title={t('mainMinimizeTitle')}
             onClick={() => api.minimizeWindow()}
           >
-            —
+            <svg
+              className="icon-min"
+              width="11"
+              height="11"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.4"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              {/* 标准最小化：水平短横线，与常见窗口控制按钮一致 */}
+              <line x1="1.5" y1="6" x2="10.5" y2="6" />
+            </svg>
           </button>
         </div>
       </div>

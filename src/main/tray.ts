@@ -1,36 +1,58 @@
-import { Tray, Menu, app, BrowserWindow, nativeImage } from 'electron';
+import { Tray, Menu, app, BrowserWindow, nativeImage, type NativeImage } from 'electron';
+import fs from 'node:fs';
+import path from 'node:path';
 import zlib from 'node:zlib';
 
 /**
- * 运行时生成 ₿ 金色徽章 PNG 图标（与标题栏 SVG logo / 应用图标同一几何设计），
- * 避免依赖外部 .ico/.png 资源文件，保证开箱即用。
+ * 托盘图标加载策略：
+ * 1. 优先加载打包/构建时用真实字体渲染生成的 PNG（与标题栏 B 字形完全一致）：
+ *    - Windows：assets/tray-icon.png（金色徽章 32px，HiDPI 自动合并 @2x 64px）
+ *    - macOS：assets/tray-mac.png（黑色 Template 模板 16px + @2x 32px，
+ *      经 setTemplateImage 由系统按菜单栏深浅自动反色，符合 macOS 设计规范）
+ * 2. 资源缺失时回退到运行时几何渲染（createTrayPng，造型同源）。
  */
+function resolveTrayImagePath(): string | null {
+  const isMac = process.platform === 'darwin';
+  const name = isMac ? 'tray-mac.png' : 'tray-icon.png';
+  // 打包后：asar 根（files 配置带入 assets/）；开发：项目根 assets/
+  const candidates = [
+    path.join(app.getAppPath(), 'assets', name),
+    path.join(__dirname, '..', '..', 'assets', name),
+  ];
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+function loadTrayImage(): NativeImage {
+  const p = resolveTrayImagePath();
+  if (p) {
+    const img = nativeImage.createFromPath(p);
+    if (!img.isEmpty()) {
+      if (process.platform === 'darwin') img.setTemplateImage(true);
+      return img;
+    }
+  }
+  return nativeImage.createFromBuffer(createTrayPng(32));
+}
 // ₿ 字形几何（归一化坐标，与 scripts/make-icon.mjs、MiniWindow.tsx 的 SVG 同源）
+// 参考稿样式：描边式 "B"（空心碗）+ 碗内双竖线
 const GLYPH_RECTS: ReadonlyArray<readonly [number, number, number, number]> = [
-  [0.3, 0.44, 0.16, 0.84], // 竖干
-  [0.16, 0.26, 0.06, 0.22], // 上刻线 1
-  [0.33, 0.43, 0.06, 0.22], // 上刻线 2
-  [0.16, 0.26, 0.78, 0.94], // 下刻线 1
-  [0.33, 0.43, 0.78, 0.94], // 下刻线 2
-  [0.3, 0.58, 0.18, 0.31], // 上横杠
-  [0.3, 0.53, 0.45, 0.57], // 中横杠
-  [0.3, 0.62, 0.69, 0.82], // 下横杠
+  [0.42, 0.52, 0.20, 0.72], // B 竖干
+  [0.21, 0.79, 0.20, 0.28], // B 顶横
+  [0.21, 0.60, 0.44, 0.52], // B 中横
+  [0.21, 0.79, 0.64, 0.72], // B 底横
+  [0.63, 0.71, 0.28, 0.44], // B 上碗右缘
+  [0.63, 0.71, 0.52, 0.64], // B 下碗右缘
+  [0.33, 0.41, 0.26, 0.72], // 左竖线
+  [0.58, 0.63, 0.26, 0.72], // 右竖线
 ];
-const GLYPH_RINGS = [
-  { cx: 0.615, cy: 0.395, rO: 0.2, rI: 0.095, uMin: 0.4 }, // 上半环
-  { cx: 0.645, cy: 0.635, rO: 0.215, rI: 0.105, uMin: 0.4 }, // 下半环
-];
-const GB = { x0: 0.16, x1: 0.86, y0: 0.06, y1: 0.94 };
+const GB = { x0: 0.16, x1: 0.84, y0: 0.08, y1: 0.92 };
 
 function glyphHit(u: number, v: number): boolean {
   for (const [x0, x1, y0, y1] of GLYPH_RECTS) {
     if (u >= x0 && u <= x1 && v >= y0 && v <= y1) return true;
-  }
-  for (const r of GLYPH_RINGS) {
-    if (u >= r.uMin) {
-      const d2 = (u - r.cx) ** 2 + (v - r.cy) ** 2;
-      if (d2 <= r.rO * r.rO && d2 >= r.rI * r.rI) return true;
-    }
   }
   return false;
 }
@@ -65,15 +87,11 @@ function createTrayPng(size = 32): Buffer {
           if (d > rFace) continue;
           let r: number, g: number, b: number;
           if (d > rInner) {
-            r = 185; g = 126; b = 0; // 外圈 #B97E00
+            r = 255; g = 217; b = 138; // 亮金描边 #FFD98A
           } else {
-            // 金面渐变 #FFD25E → #E89B00
-            const t = Math.min(1, Math.max(0, dy / rInner));
-            r = Math.round(255 + (232 - 255) * t);
-            g = Math.round(210 + (155 - 210) * t);
-            b = Math.round(94 + (0 - 94) * t);
+            r = 246; g = 183; b = 60; // 金色平底 #F6B73C
             if (glyphHit((px - ox) / scale, (py - oy) / scale)) {
-              r = 92; g = 61; b = 0; // ₿ 深棕 #5C3D00
+              r = 26; g = 26; b = 26; // ₿ 近黑 #1a1a1a
             }
           }
           rAcc += r; gAcc += g; bAcc += b; solid++;
@@ -144,7 +162,7 @@ let tray: Tray | null = null;
  * 是「取消穿透」最可靠的入口。
  */
 export function createTray(opts: TrayOptions): { refresh: () => void } {
-  const image = nativeImage.createFromBuffer(createTrayPng());
+  const image = loadTrayImage();
   tray = new Tray(image);
 
   const build = () => {
