@@ -7,20 +7,22 @@ import zlib from 'node:zlib';
  * 托盘图标加载策略：
  * 1. 优先加载打包/构建时用真实字体渲染生成的 PNG（与标题栏 B 字形完全一致）：
  *    - Windows：assets/tray-icon.png（金色徽章 32px，HiDPI 自动合并 @2x 64px）
- *    - macOS：assets/tray-mac.png（黑色 Template 模板 16px + @2x 32px，
- *      经 setTemplateImage 由系统按菜单栏深浅自动反色，符合 macOS 设计规范）
+ *    - macOS：assets/tray-mac22.png（**彩色**圆角矩形金底 ₿，22pt，Electron 自动合并
+ *      @2x/@3x representations；16pt 组 tray-mac16.png 作为回退）。彩色图标不使用
+ *      Template（Template 只渲染 alpha 单色、丢弃颜色，会导致背景色缺失）。
  * 2. 资源缺失时回退到运行时几何渲染（createTrayPng，造型同源）。
  */
 function resolveTrayImagePath(): string | null {
   const isMac = process.platform === 'darwin';
-  const name = isMac ? 'tray-mac.png' : 'tray-icon.png';
+  // macOS 优先 22pt（现代菜单栏高度），回退 16pt
+  const name = isMac ? ['tray-mac22.png', 'tray-mac16.png'] : ['tray-icon.png'];
   // 打包后：asar 根（files 配置带入 assets/）；开发：项目根 assets/
-  const candidates = [
-    path.join(app.getAppPath(), 'assets', name),
-    path.join(__dirname, '..', '..', 'assets', name),
-  ];
-  for (const p of candidates) {
-    if (fs.existsSync(p)) return p;
+  const roots = [path.join(app.getAppPath(), 'assets'), path.join(__dirname, '..', '..', 'assets')];
+  for (const root of roots) {
+    for (const n of name) {
+      const p = path.join(root, n);
+      if (fs.existsSync(p)) return p;
+    }
   }
   return null;
 }
@@ -29,10 +31,7 @@ function loadTrayImage(): NativeImage {
   const p = resolveTrayImagePath();
   if (p) {
     const img = nativeImage.createFromPath(p);
-    if (!img.isEmpty()) {
-      if (process.platform === 'darwin') img.setTemplateImage(true);
-      return img;
-    }
+    if (!img.isEmpty()) return img; // 彩色图标：不设置 Template，保留背景色与颜色
   }
   return nativeImage.createFromBuffer(createTrayPng(32));
 }

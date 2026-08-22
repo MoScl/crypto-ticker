@@ -24,6 +24,7 @@ export const zh = {
   mainMultiSelTitle: '多选移除币种',
   mainSettingsTitle: '设置',
   mainMinimizeTitle: '最小化到任务栏',
+  mainMinimalEnter: '进入极简模式',
   mainEmpty: '暂无监控币种，先在上方添加',
   mainSelectAll: '全选',
   mainCancelAll: '取消全选',
@@ -146,7 +147,14 @@ export const zh = {
   setCtHintOff:
     '开启后鼠标点击将透过窗口，不影响下层应用。恢复方式：光标移到窗口右上角按钮区域、托盘菜单「退出点击穿透」或快捷键 Ctrl+Shift+X。',
   setAutoStart: '开机自启动',
+  setMinimalMode: '极简模式',
+  setMinimalModeHint:
+    '隐藏搜索栏、Logo 与工具栏，仅保留币种列表；底部状态栏常驻「穿透解锁 / 退出极简」图标按钮，随时可恢复。',
   setDone: '完成',
   langZh: '中文',
   langEn: 'English',
+  // 极简模式状态栏动作按钮（纯图标，title 提示）
+  minimalCtTitleOff: '开启点击穿透',
+  minimalCtTitleOn: '关闭点击穿透',
+  minimalExitTitle: '退出极简模式',
 };

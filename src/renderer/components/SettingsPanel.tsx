@@ -253,6 +253,18 @@ export function SettingsPanel({ onClose }: Props) {
           <label className="row-check">
             <input
               type="checkbox"
+              checked={config.minimalMode}
+              onChange={(e) => patchConfig({ minimalMode: e.target.checked })}
+            />
+            <span>{t('setMinimalMode')}</span>
+          </label>
+          <div className={`ct-hint${config.minimalMode ? ' on' : ''}`}>
+            {t('setMinimalModeHint')}
+          </div>
+
+          <label className="row-check">
+            <input
+              type="checkbox"
               checked={config.autoStart}
               onChange={(e) => setAutoStart(e.target.checked)}
             />

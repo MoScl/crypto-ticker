@@ -18,7 +18,12 @@ const api = {
   setAlwaysOnTop: (v: boolean) => ipcRenderer.send(IPC.SET_ALWAYS_ON_TOP, v),
   hideWindow: () => ipcRenderer.send(IPC.HIDE_WINDOW),
   showWindow: () => ipcRenderer.send(IPC.SHOW_WINDOW),
-  resizeWindow: (w: number, h: number) => ipcRenderer.send(IPC.WINDOW_RESIZE, w, h),
+  /** 边缘拖拽调整窗口大小：keepRight/keepBottom 表示对应边缘固定（n/w 方向拖动时补偿位置） */
+  resizeWindow: (
+    w: number,
+    h: number,
+    opts?: { keepRight?: boolean; keepBottom?: boolean },
+  ) => ipcRenderer.send(IPC.WINDOW_RESIZE, w, h, opts),
   minimizeWindow: () => ipcRenderer.send(IPC.MINIMIZE_WINDOW),
   setClickThrough: (v: boolean) => ipcRenderer.send(IPC.SET_CLICK_THROUGH, v),
   setClickThroughBtnRect: (rect: { x: number; y: number; w: number; h: number } | null) =>

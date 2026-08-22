@@ -19,7 +19,11 @@ interface ApiBridge {
   setAlwaysOnTop: (v: boolean) => void;
   hideWindow: () => void;
   showWindow: () => void;
-  resizeWindow: (w: number, h: number) => void;
+  resizeWindow: (
+    w: number,
+    h: number,
+    opts?: { keepRight?: boolean; keepBottom?: boolean },
+  ) => void;
   minimizeWindow: () => void;
   setClickThrough: (v: boolean) => void;
   setClickThroughBtnRect: (rect: { x: number; y: number; w: number; h: number } | null) => void;

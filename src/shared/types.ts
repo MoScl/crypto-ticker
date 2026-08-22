@@ -27,6 +27,8 @@ export interface AppConfig {
   alwaysOnTop: boolean;
   clickThrough: boolean;
   autoStart: boolean;
+  /** 极简模式：隐藏搜索栏/Logo/工具栏，仅保留币种列表与底部控制按钮 */
+  minimalMode: boolean;
   theme: 'dark';
   language: AppLanguage; // 界面语言：zh 中文 / en English
   windowBounds?: { x?: number; y?: number; w: number; h: number };
@@ -111,6 +113,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   alwaysOnTop: true,
   clickThrough: false,
   autoStart: false,
+  minimalMode: false,
   theme: 'dark',
   language: 'zh',
 };

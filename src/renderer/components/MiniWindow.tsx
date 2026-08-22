@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { api } from '../lib/api';
 import { searchCoins, type CoinInfo } from '../data/coins';
@@ -7,6 +7,8 @@ import { SettingsPanel } from './SettingsPanel';
 import { AddCoinModal } from './AddCoinModal';
 import { NetworkIndicator } from './NetworkIndicator';
 import { ClickThroughEscape } from './ClickThroughEscape';
+import { StatusbarActions } from './StatusbarActions';
+import { EdgeResize } from './EdgeResize';
 import { RefreshTime } from './RefreshTime';
 import { useI18n } from '../i18n';
 import { SOURCE_LABELS } from '../../shared/constants';
@@ -20,6 +22,8 @@ export function MiniWindow() {
   const addCoin = useAppStore((s) => s.addCoin);
   const removeCoin = useAppStore((s) => s.removeCoin);
   const reorderCoin = useAppStore((s) => s.reorderCoin);
+  const patchConfig = useAppStore((s) => s.patchConfig);
+  const minimalMode = useAppStore((s) => s.config.minimalMode);
 
   const [query, setQuery] = useState('');
   const [showSuggest, setShowSuggest] = useState(false);
@@ -28,7 +32,6 @@ export function MiniWindow() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const resizeRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
 
   // 穿透开启后窗口将忽略鼠标事件，设置面板会被“锁死”无法点击关闭：
   // 无论从设置、托盘还是快捷键开启，都在穿透生效时自动收起面板与多选模式
@@ -76,30 +79,6 @@ export function MiniWindow() {
     setSelectedIds(new Set());
   };
 
-  const onResizeDown = (e: React.PointerEvent) => {
-    e.preventDefault();
-    resizeRef.current = {
-      x: e.clientX,
-      y: e.clientY,
-      w: window.innerWidth,
-      h: window.innerHeight,
-    };
-    const move = (ev: globalThis.PointerEvent) => {
-      const d = resizeRef.current;
-      if (!d) return;
-      const w = Math.max(200, d.w + (ev.clientX - d.x));
-      const h = Math.max(200, d.h + (ev.clientY - d.y));
-      api.resizeWindow(w, h);
-    };
-    const up = () => {
-      resizeRef.current = null;
-      window.removeEventListener('pointermove', move);
-      window.removeEventListener('pointerup', up);
-    };
-    window.addEventListener('pointermove', move);
-    window.addEventListener('pointerup', up);
-  };
-
   const srcName = sourceStatus ? SOURCE_LABELS[sourceStatus.source]?.[lang] ?? sourceStatus.source : '';
   const srcStateName = !sourceStatus
     ? t('mainSrcStateConnecting')
@@ -124,8 +103,11 @@ export function MiniWindow() {
     ? t('mainSrcConnecting')
     : t('mainSrcState', { label: srcName, state: srcStateName });
 
+  const locked = minimalMode && config.clickThrough; // 极简 + 穿透 = 窗口锁定：顶部栏禁拖
   return (
-    <div className="app">
+    <div
+      className={`app${minimalMode ? ' minimal' : ''}${config.clickThrough ? ' ct-active' : ''}${locked ? ' ct-locked' : ''}`}
+    >
       <div className="titlebar">
         <span className="title">
           <svg
@@ -160,7 +142,30 @@ export function MiniWindow() {
           title={statusTitle}
         />
         <div className="title-actions no-drag">
-          <ClickThroughEscape />
+          <button
+            className={`icon-btn${minimalMode ? ' active' : ''}`}
+            title={minimalMode ? t('minimalExitTitle') : t('mainMinimalEnter')}
+            onClick={() => patchConfig({ minimalMode: !minimalMode })}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              {/* 布局面板：一键进入/退出极简模式 */}
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18" />
+              <path d="M9 21V9" />
+            </svg>
+          </button>
+          {/* 极简模式下标题栏整体隐藏，逃生/交互职责由状态栏动作组承担 */}
+          {!minimalMode && <ClickThroughEscape />}
           <button
             className={`icon-btn${config.clickThrough ? ' ct-available' : ''}`}
             title={config.clickThrough ? t('mainSettingsTitle') : t('mainSettingsTitle')}
@@ -307,12 +312,15 @@ export function MiniWindow() {
         {sorted.length === 0 && <div className="empty">{t('mainEmpty')}</div>}
       </div>
 
-      <div className="statusbar no-drag">
+      <div className={minimalMode ? 'statusbar statusbar-top' : 'statusbar no-drag'}>
         <RefreshTime />
-        <span className={`statusbar-src ${srcState}`}>{srcLabel}</span>
+        <div className="statusbar-right">
+          <span className={`statusbar-src ${srcState}`}>{srcLabel}</span>
+          {minimalMode && <StatusbarActions />}
+        </div>
       </div>
 
-      <div className="resize-handle no-drag" onPointerDown={onResizeDown} title={t('mainResizeTitle')} />
+      <EdgeResize />
 
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       {showAddModal && <AddCoinModal onClose={() => setShowAddModal(false)} />}

@@ -10,11 +10,15 @@ files:
   - dist/**/*
   - package.json
   # 托盘图标（真实字体渲染，主进程运行时加载）：
-  # Windows 金色徽章 32px + @2x；macOS 黑色 Template 模板 16px + @2x
+  # Windows 金色徽章 32px + @2x；macOS 彩色圆角矩形 16pt/22pt（各 @1x/@2x/@3x）
   - assets/tray-icon.png
   - assets/tray-icon@2x.png
-  - assets/tray-mac.png
-  - assets/tray-mac@2x.png
+  - assets/tray-mac16.png
+  - assets/tray-mac16@2x.png
+  - assets/tray-mac16@3x.png
+  - assets/tray-mac22.png
+  - assets/tray-mac22@2x.png
+  - assets/tray-mac22@3x.png
 
 # P9：Windows 安装包（NSIS）
 win:

@@ -120,6 +120,11 @@ body {
 .icon-btn:hover {
   background: rgba(255, 255, 255, 0.14);
 }
+/* 激活态（如极简模式切换按钮：当前处于极简模式时金色高亮） */
+.icon-btn.active {
+  background: rgba(240, 185, 11, 0.16);
+  color: var(--accent);
+}
 
 /* 数据源状态点 */
 .status-dot {
@@ -311,25 +316,59 @@ body {
 .coin-change.neutral { color: var(--text-dim); }
 /* 自选列表行的常驻平台图标与多选模式样式见文件末尾 */
 
-/* 缩放把手（右下角） */
-.resize-handle {
+/* ===== 窗口边缘调整大小（替代原右下角缩放把手） ===== */
+.edge-n,
+.edge-s {
   position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 6px;
+  z-index: 30;
+}
+.edge-n {
+  top: 0;
+}
+.edge-s {
+  bottom: 0;
+}
+.edge-e,
+.edge-w {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  width: 6px;
+  z-index: 30;
+}
+.edge-e {
+  right: 0;
+}
+.edge-w {
+  left: 0;
+}
+.edge-ne,
+.edge-nw,
+.edge-se,
+.edge-sw {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  z-index: 31;
+}
+.edge-nw {
+  left: 0;
+  top: 0;
+}
+.edge-ne {
+  right: 0;
+  top: 0;
+}
+.edge-sw {
+  left: 0;
+  bottom: 0;
+}
+.edge-se {
   right: 0;
   bottom: 0;
-  width: 16px;
-  height: 16px;
-  cursor: nwse-resize;
-  background: linear-gradient(
-    135deg,
-    transparent 50%,
-    rgba(255, 255, 255, 0.25) 50%,
-    rgba(255, 255, 255, 0.25) 62%,
-    transparent 62%,
-    transparent 74%,
-    rgba(255, 255, 255, 0.25) 74%,
-    rgba(255, 255, 255, 0.25) 86%,
-    transparent 86%
-  );
 }
 
 /* ===== 精致滚动条（深色主题） ===== */
@@ -646,6 +685,112 @@ body {
 .statusbar-src.bad { color: var(--down); }
 .statusbar-src.degraded { color: var(--accent); }
 .statusbar-src.pending { color: var(--text-dim); }
+
+/* ===== 极简模式 ===== */
+/* 标题栏 / 操作条在极简模式淡出收起（平滑过渡，避免闪烁）。
+   visibility 延迟切换：隐藏时等淡出动画完成再隐藏，显示时立即可见。 */
+.titlebar,
+.add-row {
+  transition: opacity 0.16s ease, transform 0.16s ease, height 0.16s ease,
+    padding-top 0.16s ease, padding-bottom 0.16s ease, margin 0.16s ease;
+}
+.app.minimal .titlebar,
+.app.minimal .add-row {
+  transition: opacity 0.16s ease, transform 0.16s ease, height 0.16s ease,
+    padding-top 0.16s ease, padding-bottom 0.16s ease, margin 0.16s ease,
+    visibility 0s 0.16s;
+  height: 0;
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
+  border-bottom-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-6px);
+  visibility: hidden;
+  pointer-events: none;
+}
+/* 极简模式底部状态栏动作组：穿透解锁 + 退出极简（纯图标，不挤压时间/网络信息） */
+/* 极简模式：状态栏移至窗口顶部（order:-1），充当可拖动标题栏；
+   穿透锁定（ct-locked）时禁用拖动。 */
+.statusbar-top {
+  -webkit-app-region: drag;
+  order: -1;
+  cursor: move;
+  border-top: none;
+  border-bottom: 1px solid var(--border);
+}
+.statusbar-top .statusbar-actions,
+.statusbar-top .sb-btn {
+  -webkit-app-region: no-drag;
+}
+/* 穿透锁定：极简模式顶部栏禁拖（穿透态窗口锁定，仅白名单控件可交互） */
+.app.ct-locked .statusbar-top {
+  -webkit-app-region: no-drag;
+  cursor: default;
+}
+/* 穿透开启时（ct-active）状态栏区域强制不可拖——排除 drag 命中区对
+   「解锁穿透 / 退出极简」白名单按钮点击的干扰，确保按钮始终可点 */
+.app.ct-active .statusbar-top {
+  -webkit-app-region: no-drag !important;
+}
+
+/* ===== 穿透态交互白名单 =====
+   穿透开启时（app.ct-active）：
+   - 全局 pointer-events:none + cursor:default —— 无 hover、无手型光标、无任何点击响应，
+     与主进程「仅命中白名单区域才恢复交互」严格同步，避免「看起来可点但实际已穿透」的误导；
+   - 仅 .ct-hot 控件（解锁穿透 / 退出极简 / 右上角逃生按钮）恢复可交互与 pointer 光标。
+   解除穿透后本类移除，全部 hover 与点击响应完整恢复。 */
+.app.ct-active * {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+.app.ct-active .ct-hot,
+.app.ct-active .ct-hot * {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+.statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.statusbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.sb-btn {
+  -webkit-app-region: no-drag;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-dim);
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.sb-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--text);
+}
+/* 穿透开启：按钮常亮提示；光标命中按钮区域（主进程广播）时进一步高亮 */
+.sb-btn.armed {
+  color: var(--accent);
+  background: rgba(240, 185, 11, 0.14);
+}
+.sb-btn.armed.interactive {
+  background: rgba(240, 185, 11, 0.24);
+  box-shadow: 0 0 0 1px rgba(240, 185, 11, 0.55);
+}
 
 /* ===== 设置页页脚操作区（完成） ===== */
 .footer-actions {

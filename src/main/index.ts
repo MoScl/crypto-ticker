@@ -63,20 +63,23 @@ let trayRefresh: (() => void) | null = null;
 //
 // 交互判定策略（关键）：
 // 穿透开启后窗口默认保持穿透（点击直达下层应用）。只有当
-//   1) 光标落在右上角按钮区域（退出/设置/最小化，由渲染进程上报相对矩形），或
+//   1) 光标落在白名单按钮区域（解锁穿透/退出极简/右上角逃生，由渲染进程上报屏幕绝对坐标），或
 //   2) 设置面板打开（渲染进程请求 hold，窗口需可交互以便操作面板）
 // 时才临时恢复整窗交互，其余位置一律保持穿透——否则「光标在窗口内就恢复交互」
 // 会令窗口始终拦截鼠标，穿透形同虚设。
-const HOVER_POLL_MS = 100;
-const CT_BTN_MARGIN = 8; // 按钮区域外扩容差，便于鼠标命中
+const HOVER_POLL_MS = 60;
+const CT_BTN_MARGIN = 12; // 按钮区域外扩容差，便于鼠标命中（小按钮 + 边缘抖动需更大容差）
+const CT_HIT_GRACE_MS = 600; // 命中后点击保护：覆盖用户从光标进入按钮到 mousedown 的反应时间（通常 200-500ms）
 let hoverTimer: NodeJS.Timeout | null = null;
 let ctInteractive = false; // 当前是否处于「可交互」状态
-let ctBtnRect: { x: number; y: number; w: number; h: number } | null = null; // 渲染进程上报的按钮区域（相对窗口内容区）
+let ctBtnRect: { x: number; y: number; w: number; h: number } | null = null; // 渲染进程上报的按钮区域（屏幕绝对坐标，DIP）
 let ctHold = false; // 渲染进程请求保持整窗交互（设置面板打开等）
+let ctLastHitAt = 0; // 最近一次命中按钮区域的时间戳（点击保护）
 
 function startHoverDetector(): void {
   stopHoverDetector();
   ctInteractive = false;
+  ctLastHitAt = 0;
   hoverTimer = setInterval(() => {
     const win = mainWindow;
     // 窗口不可见 / 最小化 / 销毁 / 已退出穿透时暂停判定
@@ -86,18 +89,21 @@ function startHoverDetector(): void {
       return;
     }
     const cursor = screen.getCursorScreenPoint();
-    const b = win.getBounds();
-    // 可交互条件：面板保持交互 或 光标命中右上角按钮区域（窗口 bounds + 按钮相对矩形）
-    let interactive = ctHold;
-    if (!interactive && ctBtnRect) {
-      const ax = b.x + ctBtnRect.x;
-      const ay = b.y + ctBtnRect.y;
-      interactive =
-        cursor.x >= ax - CT_BTN_MARGIN &&
-        cursor.x <= ax + ctBtnRect.w + CT_BTN_MARGIN &&
-        cursor.y >= ay - CT_BTN_MARGIN &&
-        cursor.y <= ay + ctBtnRect.h + CT_BTN_MARGIN;
+    // 可交互条件：面板保持交互 或 光标命中按钮区域。
+    // 按钮区域由渲染进程上报**屏幕绝对坐标**（window.screenX/screenY + rect，DIP），
+    // 与 screen.getCursorScreenPoint 同坐标系——判定区域与用户看到的按钮位置严格对齐。
+    let hit = false;
+    if (ctBtnRect) {
+      hit =
+        cursor.x >= ctBtnRect.x - CT_BTN_MARGIN &&
+        cursor.x <= ctBtnRect.x + ctBtnRect.w + CT_BTN_MARGIN &&
+        cursor.y >= ctBtnRect.y - CT_BTN_MARGIN &&
+        cursor.y <= ctBtnRect.y + ctBtnRect.h + CT_BTN_MARGIN;
     }
+    if (hit) ctLastHitAt = Date.now();
+    // 点击保护：命中后 600ms 内即使移出按钮区也保持交互，防止
+    // 快速点击瞬间（mousedown 时尚未命中）被判定 miss 而穿透到下层
+    let interactive = ctHold || hit || Date.now() - ctLastHitAt < CT_HIT_GRACE_MS;
     if (interactive && !ctInteractive) {
       ctInteractive = true;
       win.setIgnoreMouseEvents(false); // 光标在按钮区域：临时恢复交互（按钮可点击）
@@ -108,7 +114,8 @@ function startHoverDetector(): void {
       win.webContents.send(IPC.CLICK_THROUGH_HOVER_STATE, true);
     } else if (!interactive && ctInteractive) {
       ctInteractive = false;
-      win.setIgnoreMouseEvents(true, { forward: true }); // 光标移出按钮区域：恢复穿透
+      ctLastHitAt = 0;
+      win.setIgnoreMouseEvents(true, { forward: false }); // 光标移出按钮区域：恢复穿透
       win.webContents.send(IPC.CLICK_THROUGH_HOVER_STATE, false);
     }
   }, HOVER_POLL_MS);
@@ -164,13 +171,14 @@ async function applyProxy(cfg: AppConfig): Promise<void> {
 
 /**
  * 将点击穿透状态应用到窗口。
- * 开启：setIgnoreMouseEvents(true, {forward:true}) + 启动全局光标轮询——
- * 光标在窗口内时临时恢复交互（设置/最小化/退出按钮可点击），移出后恢复穿透；
+ * 开启：setIgnoreMouseEvents(true, {forward:false}) + 启动全局光标轮询——
+ * 常态穿透下渲染层收不到任何鼠标事件（无 hover、无指针样式变化，保持系统默认光标），
+ * 仅当光标命中上报的按钮区域时临时恢复交互（按钮可点击），移出后恢复穿透。
  * 关闭：停止轮询，恢复窗口对鼠标事件的正常接收（可点击、可拖拽标题栏、可缩放）。
  */
 function applyClickThroughWindow(v: boolean): void {
   if (v) {
-    mainWindow?.setIgnoreMouseEvents(true, { forward: true });
+    mainWindow?.setIgnoreMouseEvents(true, { forward: false });
     startHoverDetector();
   } else {
     stopHoverDetector();
@@ -351,12 +359,25 @@ app.whenReady().then(async () => {
     mainWindow?.focus();
   });
   ipcMain.on(IPC.MINIMIZE_WINDOW, () => mainWindow?.minimize());
-  // 持久化窗口尺寸（P7）
-  ipcMain.on(IPC.WINDOW_RESIZE, (_e, w: number, h: number) => {
-    mainWindow?.setSize(w, h, true);
-    appConfig.windowBounds = { ...(appConfig.windowBounds ?? {}), w, h };
-    saveConfig(appConfig);
-  });
+  // 持久化窗口尺寸（P7）。边缘拖拽调整：n/w 方向拖动时保持对边（右/下）固定
+  ipcMain.on(
+    IPC.WINDOW_RESIZE,
+    (
+      _e,
+      w: number,
+      h: number,
+      opts?: { keepRight?: boolean; keepBottom?: boolean },
+    ) => {
+      const win = mainWindow;
+      if (!win) return;
+      const b = win.getBounds();
+      const x = opts?.keepRight ? b.x + b.width - w : b.x;
+      const y = opts?.keepBottom ? b.y + b.height - h : b.y;
+      win.setBounds({ x, y, width: w, height: h }, true);
+      appConfig.windowBounds = { x, y, w, h };
+      saveConfig(appConfig);
+    },
+  );
 });
 
 // P6：托盘模式下关闭全部窗口不退出应用

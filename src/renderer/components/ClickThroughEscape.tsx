@@ -33,20 +33,27 @@ export function ClickThroughEscape() {
   const [interactive, setInteractive] = useState(false); // 主进程广播：当前是否处于可交互状态
   const btnRef = useRef<HTMLButtonElement>(null);
 
-  // 穿透开启时上报按钮矩形（相对窗口内容区，CSS px = DIP，与主进程 getBounds 坐标系一致）；
-  // 窗口尺寸变化（resize 把手拖动）后按钮位置改变，需重新上报。
+  // 穿透开启时上报按钮的**屏幕绝对坐标**（与 StatusbarActions 同机制）：主进程直接用
+  // 屏幕光标坐标比对，判定区域与视觉位置严格对齐；300ms 定时重报覆盖窗口移动/缩放。
   useEffect(() => {
     if (!clickThrough) return;
     const report = () => {
       const el = btnRef.current;
       if (!el) return;
       const r = el.getBoundingClientRect();
-      api.setClickThroughBtnRect({ x: r.x, y: r.y, w: r.width, h: r.height });
+      api.setClickThroughBtnRect({
+        x: window.screenX + r.x,
+        y: window.screenY + r.y,
+        w: r.width,
+        h: r.height,
+      });
     };
     report();
     window.addEventListener('resize', report);
+    const timer = window.setInterval(report, 300);
     return () => {
       window.removeEventListener('resize', report);
+      window.clearInterval(timer);
       api.setClickThroughBtnRect(null); // 组件卸载 / 退出穿透：清除按钮区域
     };
   }, [clickThrough]);
@@ -67,7 +74,7 @@ export function ClickThroughEscape() {
   return (
     <button
       ref={btnRef}
-      className={`ct-escape icon-btn ${interactive ? 'armed' : ''}`}
+      className={`ct-escape icon-btn ct-hot ${interactive ? 'armed' : ''}`}
       title={t('ctExitTitle')}
       onClick={() => setClickThrough(false)}
     >

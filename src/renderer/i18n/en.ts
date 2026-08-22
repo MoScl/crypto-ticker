@@ -26,6 +26,7 @@ export const en: typeof zh = {
   mainMultiSelTitle: 'Remove coins (multi-select)',
   mainSettingsTitle: 'Settings',
   mainMinimizeTitle: 'Minimize to taskbar',
+  mainMinimalEnter: 'Enter minimal mode',
   mainEmpty: 'No coins yet, add one above',
   mainSelectAll: 'Select all',
   mainCancelAll: 'Deselect all',
@@ -148,7 +149,14 @@ export const en: typeof zh = {
   setCtHintOff:
     'When enabled, mouse clicks pass through the window. To restore: move the cursor to the top-right buttons, use the tray menu "Exit click-through", or press Ctrl+Shift+X.',
   setAutoStart: 'Launch at startup',
+  setMinimalMode: 'Minimal mode',
+  setMinimalModeHint:
+    'Hide the search bar, logo and toolbar, keeping only the watchlist; the status bar keeps "Unlock / Exit minimal" icon buttons so you can always restore.',
   setDone: 'Done',
   langZh: '中文',
   langEn: 'English',
+  // Minimal-mode status bar action buttons (icons only, tooltip text)
+  minimalCtTitleOff: 'Enable click-through',
+  minimalCtTitleOn: 'Disable click-through',
+  minimalExitTitle: 'Exit minimal mode',
 };
