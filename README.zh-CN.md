@@ -48,7 +48,14 @@
 
 ## 下载
 
-提供 Windows 安装包（NSIS 向导式）与 macOS 镜像（dmg）。应用未做代码签名，首次运行 Windows SmartScreen 点「更多信息 → 仍要运行」，macOS 右键 →「打开」即可。
+获取最新版 macOS 安装包：
+
+[![下载 macOS dmg](https://img.shields.io/badge/下载-macOS_dmg-black?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/MoScl/crypto-ticker/releases/latest/download/CryptoTicker-universal.dmg)
+[![下载 macOS zip](https://img.shields.io/badge/下载-macOS_zip-black?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/MoScl/crypto-ticker/releases/latest/download/CryptoTicker-arm64-mac.zip)
+
+> **macOS**：universal dmg 同时支持 Apple Silicon 与 Intel（macOS 11+）。应用未签名，首次运行请右键 →「打开」。
+>
+> **Windows**：NSIS 安装包规划中，当前可在 Windows 机器上 `npm run dist` 自行构建。
 
 ## 快速开始（源码运行）
 

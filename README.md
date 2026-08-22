@@ -48,7 +48,14 @@ Toggle to a distraction-free, ultra-compact view that hides the title bar, searc
 
 ## Download
 
-Prebuilt installers are available for Windows (NSIS setup) and macOS (dmg). The app is unsigned; on first launch, choose **More info → Run anyway** (Windows SmartScreen) or right-click → Open (macOS).
+Get the latest release for macOS:
+
+[![Download macOS dmg](https://img.shields.io/badge/Download-macOS_dmg-black?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/MoScl/crypto-ticker/releases/latest/download/CryptoTicker-universal.dmg)
+[![Download macOS zip](https://img.shields.io/badge/Download-macOS_zip-black?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/MoScl/crypto-ticker/releases/latest/download/CryptoTicker-arm64-mac.zip)
+
+> **macOS**: universal dmg works on both Apple Silicon and Intel Macs (macOS 11+). The app is unsigned; on first launch, right-click → **Open**.
+>
+> **Windows**: an NSIS installer is planned — build from source with `npm run dist` on a Windows machine for now.
 
 ## Quick Start (from source)
 
