@@ -37,7 +37,7 @@ const UPLOADS = `https://uploads.github.com/repos/${OWNER}/${REPO}`;
 const ASSETS = [
   { file: 'CryptoTicker-universal.dmg', from: 'CryptoTicker-*-universal.dmg' },
   { file: 'CryptoTicker-arm64-mac.zip', from: 'CryptoTicker-*-arm64-mac.zip' },
-  { file: 'CryptoTicker-Setup-0.1.0.exe', from: 'CryptoTicker Setup 0.1.0.exe' },
+  { file: 'CryptoTicker-Setup-0.1.1.exe', from: 'CryptoTicker Setup 0.1.1.exe' },
 ];
 
 const args = process.argv.slice(2);
@@ -47,12 +47,14 @@ const version = versionArg ?? JSON.parse(fs.readFileSync(path.join(repoRoot, 'pa
 const tag = `v${version}`;
 
 function getToken() {
+  // 优先使用环境变量传入的 token（便于 CI / 一次性发布，不写入仓库与凭据管理器）
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN.trim();
   const out = execFileSync('git', ['credential', 'fill'], {
     input: 'protocol=https\nhost=github.com\n\n',
     encoding: 'utf8',
   });
   const m = out.match(/^password=(.+)$/m);
-  if (!m) throw new Error('未能从 git credential 读取 GitHub token，请先 git push 一次完成认证');
+  if (!m) throw new Error('未能从 git credential 读取 GitHub token，请先 git push 一次完成认证，或设置 GITHUB_TOKEN 环境变量');
   return m[1].trim();
 }
 

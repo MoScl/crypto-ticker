@@ -1,6 +1,6 @@
 {
   "name": "crypto-ticker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Windows 桌面加密货币价格监控悬浮窗 (Electron + React)",
   "main": "dist/main/index.js",
   "author": "",
