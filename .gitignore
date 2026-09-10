@@ -4,6 +4,9 @@ node_modules/
 # Build output
 dist/
 release/
+out-win/
+release-build/
+wb-build/
 *.tsbuildinfo
 
 # Logs
