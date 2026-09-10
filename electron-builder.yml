@@ -20,20 +20,40 @@ files:
   - assets/tray-mac22@2x.png
   - assets/tray-mac22@3x.png
 
+extraResources:
+  # 随包安装到 <安装目录>\resources\app.ico。
+  # 用途：安装脚本用这个独立 ico 文件为桌面/开始菜单快捷方式显式指定图标，
+  # 不依赖 app exe 的图标注入结果（双保险，见 build/installer.nsh）。
+  - from: assets/icon.ico
+    to: app.ico
+
 # P9：Windows 安装包（NSIS）
 win:
   target: nsis
   # 应用图标（托盘图标由运行时生成，此处的 icon.ico 用于 exe/安装包）
+  # 必须是含多尺寸的 ico：16/24/32/48/64/128/256 @32bpp（当前 assets/icon.ico 已满足）。
+  # electron-builder 会通过 rcedit 把它注入 CryptoTicker.exe，
+  # 而 NSIS 生成的快捷方式图标指向的就是 exe（CreateShortCut ... "$appExe" 0），
+  # 所以 exe 图标 = 快捷方式图标。
   icon: assets/icon.ico
-  # 沙箱环境无 darwin 符号链接创建权限，winCodeSign 解压失败，
-  # 跳过 app exe 的图标/版本注入（安装包/快捷方式图标不受影响）。
-  # 正常环境删除此行即可恢复 exe 图标注入；也可在打包后手动 rcedit 注入。
-  signAndEditExecutable: false
+  # 注意：不要再设 signAndEditExecutable: false ——那会让 rcedit 整段跳过，
+  # exe 保留 Electron 默认图标，安装后桌面/开始菜单快捷方式就会显示系统默认图标。
+  # （Windows 上 rcedit 走 app-builder 自带实现，不需要下载 winCodeSign。
+  #   若确实因环境报错，恢复该选项后快捷方式图标仍由 build/installer.nsh 兜底。）
 
 nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
+  # 显式声明快捷方式行为（默认即为 true，写出来避免被其他配置覆盖）
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: CryptoTicker
+  # 安装程序自身 / 卸载程序的图标（不设时不会继承 win.icon，必须显式指定）
+  installerIcon: assets/icon.ico
+  uninstallerIcon: assets/icon.ico
+  # 安装完成后的自定义 NSIS 脚本：重建快捷方式图标 + 刷新系统图标缓存
+  include: build/installer.nsh
 
 # ===== macOS 应用包（dmg + zip）=====
 # 注意：mac 目标只能在 macOS 上构建。在 macOS 机器上执行：

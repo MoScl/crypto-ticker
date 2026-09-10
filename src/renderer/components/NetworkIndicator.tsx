@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { NetworkStatus } from '../../shared/types';
 import { useAppStore } from '../store/useAppStore';
 import { useI18n } from '../i18n';
-import { formatRefreshTime } from './RefreshTime';
+import { formatUpdatedAgo } from './RefreshTime';
 import { SOURCE_LABELS } from '../../shared/constants';
 
 /** 网络类型图标（Wi-Fi 弧线 / 以太网 / 未知-地球） */
@@ -45,6 +45,8 @@ export function NetworkIndicator({ status }: Props) {
   const { t, lang } = useI18n();
   const sourceStatus = useAppStore((s) => s.sourceStatus);
   const lastUpdateTs = useAppStore((s) => s.lastUpdateTs);
+  // 与状态栏一致：以 tickers 判定「有数据」，有数据就不显示「等待数据…」
+  const hasTickers = useAppStore((s) => Object.keys(s.tickers).length > 0);
   const clickThrough = useAppStore((s) => s.config.clickThrough);
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(Date.now());
@@ -144,19 +146,27 @@ export function NetworkIndicator({ status }: Props) {
   const dnsText = dnsBlocked ? t('netDnsBlocked') : t('netDnsOk');
   // 数据源摘要
   const srcName = sourceStatus ? SOURCE_LABELS[sourceStatus.source]?.[lang] ?? sourceStatus.source : '';
+  // 数据源未上报时显示「连接中…」而不是「等待数据…」：
+  // 「等待数据…」只保留给真正从未收到过行情数据的场景（首次启动），
+  // 否则行情已经在刷新、这里却写着等待数据，语义矛盾。
   const srcStateName = !sourceStatus
-    ? t('commonWaiting')
+    ? t('mainSrcStateConnecting')
     : !sourceStatus.ok
       ? t('commonAbnormal')
       : sourceStatus.degraded
         ? t('commonDegraded')
         : t('commonNormal');
   const srcText = !sourceStatus
-    ? t('commonWaiting')
+    ? t('mainSrcStateConnecting')
     : t('netSrcText', { label: srcName, state: srcStateName });
   const elapsedSec =
     lastUpdateTs > 0 ? Math.max(0, Math.floor((now - lastUpdateTs) / 1000)) : -1;
-  const refreshText = elapsedSec < 0 ? t('commonWaiting') : formatRefreshTime(elapsedSec, t);
+  const refreshText =
+    elapsedSec >= 0
+      ? formatUpdatedAgo(elapsedSec, t)
+      : hasTickers
+        ? t('refreshJustNow')
+        : t('commonWaiting');
 
   let state: 'online' | 'degraded' | 'offline';
   let title: string;
@@ -233,7 +243,7 @@ export function NetworkIndicator({ status }: Props) {
             </div>
             <div className="net-item">
               <span className="net-key">{t('netKeyRefresh')}</span>
-              <span className="net-val">{t('commonUpdatedAgo', { time: refreshText })}</span>
+              <span className="net-val">{refreshText}</span>
             </div>
             <div className="net-item">
               <span className="net-key">{t('netKeyTime')}</span>

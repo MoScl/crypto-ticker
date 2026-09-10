@@ -12,7 +12,6 @@ export const en: typeof zh = {
   commonDegraded: 'Degraded',
   commonWaiting: 'Waiting for data…',
   commonMonitoring: 'Monitoring {count} coins',
-  commonUpdatedAgo: 'Updated {time} ago',
   commonDash: '—',
 
   // Data source labels
@@ -108,11 +107,11 @@ export const en: typeof zh = {
   netClickHint: 'Click to view network details',
   netSrcText: '{label} ({state})',
 
-  // Refresh time
+  // Refresh time（短语自带 ago，调用方不要再套 "Updated … ago"，否则会出现 "Just now ago"）
   refreshJustNow: 'Just now',
-  refreshSec: '{n}s',
-  refreshMin: '{n}m',
-  refreshHour: '{n}h',
+  refreshSec: '{n}s ago',
+  refreshMin: '{n}m ago',
+  refreshHour: '{n}h ago',
   refreshTitle: 'Time since the latest market data arrived',
 
   // Click-through escape button

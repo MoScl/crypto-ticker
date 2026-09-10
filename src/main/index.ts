@@ -1,7 +1,13 @@
 import { app, BrowserWindow, globalShortcut, ipcMain, screen, session, shell } from 'electron';
 import { createMiniWindow } from './windows';
 import { loadConfig, saveConfig } from './config';
-import { IPC, CLICK_THROUGH_ACCELERATOR } from '../shared/constants';
+import {
+  IPC,
+  CLICK_THROUGH_ACCELERATOR,
+  APP_USER_MODEL_ID,
+  MINIMAL_WINDOW_WIDTH,
+  NORMAL_WINDOW_WIDTH,
+} from '../shared/constants';
 import { DataService } from './data/dataSource';
 import { fetchTrendingCoins } from './data/trending';
 import { fetchRanking } from './data/ranking';
@@ -48,6 +54,13 @@ function openExternalSafe(raw: unknown): void {
 
 // P8：高 DPI 适配（125% / 150% 缩放下显示正常）
 app.commandLine.appendSwitch('high-dpi-support', '1');
+
+// Windows：注册 AppUserModelID。必须在创建任何 BrowserWindow 之前调用，
+// 否则任务栏分组 / 通知 / 跳转列表会被归到默认的 Electron 分组。
+// ID 与 electron-builder.yml 的 appId、NSIS 快捷方式写入的 AUMI 三者保持一致。
+if (process.platform === 'win32') {
+  app.setAppUserModelId(APP_USER_MODEL_ID);
+}
 
 let mainWindow: BrowserWindow | null = null;
 let dataService: DataService | null = null;
@@ -190,6 +203,27 @@ function applyClickThroughWindow(v: boolean): void {
   }
 }
 
+/**
+ * 极简模式切换时同步窗口宽度：进入极简收窄到 160，退出极简恢复到 240（高度不变）。
+ * - 锚定右边缘（x 补偿差值）：悬浮窗通常贴屏幕右侧，收窄/展开时右侧不动，视觉更稳。
+ * - 用 getDisplayMatching(b).workArea 把窗口夹回当前屏幕可用区，避免展开时越出屏幕边缘。
+ * - 只改宽度：用户手动调整过的高度保持不动。
+ */
+function applyMinimalWindowWidth(minimal: boolean): void {
+  const win = mainWindow;
+  if (!win) return;
+  const b = win.getBounds();
+  const w = minimal ? MINIMAL_WINDOW_WIDTH : NORMAL_WINDOW_WIDTH;
+  if (b.width === w) return;
+  let x = b.x + b.width - w; // 右边缘固定
+  const area = screen.getDisplayMatching(b).workArea;
+  if (x < area.x) x = area.x;
+  if (x + w > area.x + area.width) x = Math.max(area.x, area.x + area.width - w);
+  win.setBounds({ x, y: b.y, width: w, height: b.height }, true);
+  appConfig.windowBounds = { x, y: b.y, w, h: b.height };
+  saveConfig(appConfig);
+}
+
 /** 向渲染进程广播最新配置（托盘 / 全局快捷键等主进程侧变更后同步界面状态） */
 function broadcastConfig(): void {
   mainWindow?.webContents.send(IPC.CONFIG_CHANGED, appConfig);
@@ -228,7 +262,25 @@ app.whenReady().then(async () => {
   mainWindow = createMiniWindow();
   mainWindow.setOpacity(appConfig.opacity);
   mainWindow.setAlwaysOnTop(appConfig.alwaysOnTop);
+
+  // 启动策略：始终以默认状态启动（非极简 + 非点击穿透）。
+  // 上次退出时若停在这两个状态，这里复位并立即持久化，本次与下次启动都是默认状态。
+  // 穿透必须在 applyClickThroughWindow 之前复位，否则会带着穿透态启动（鼠标点不到窗口）。
+  const resetMinimal = appConfig.minimalMode;
+  const resetClickThrough = appConfig.clickThrough;
+  if (resetMinimal || resetClickThrough) {
+    appConfig.minimalMode = false;
+    appConfig.clickThrough = false;
+    saveConfig(appConfig);
+  }
   applyClickThroughWindow(appConfig.clickThrough);
+  // 复位极简时同步窗口宽度（等同「退出极简」→ NORMAL_WINDOW_WIDTH），避免模式与宽度不一致
+  if (resetMinimal) applyMinimalWindowWidth(false);
+
+  // 托盘常驻：任务栏不显示窗口按钮。Electron 的 skipTaskbar 等价于 ITaskbarList::DeleteTab，
+  // 在部分 Windows 版本上 hide() → show() / restore() 后会重新出现任务栏按钮，
+  // 因此每次窗口显示都重新断言一次，保证全程只有托盘图标。
+  mainWindow.on('show', () => mainWindow?.setSkipTaskbar(true));
 
   // P6：系统托盘（点击切换窗口，右键菜单退出 / 切换点击穿透）
   trayRefresh = createTray({
@@ -308,8 +360,11 @@ app.whenReady().then(async () => {
   ipcMain.handle(IPC.SAVE_CONFIG, (_e, cfg: AppConfig) => {
     const prevProxy = appConfig.proxyUrl;
     const prevClickThrough = appConfig.clickThrough;
+    const prevMinimal = appConfig.minimalMode;
     appConfig = cfg;
     saveConfig(cfg);
+    // 极简模式切换：同步窗口宽度（进入 160 / 退出 240）
+    if (cfg.minimalMode !== prevMinimal) applyMinimalWindowWidth(cfg.minimalMode);
     applyAutoStart(); // P6：开机自启随配置生效
     // 统一应用窗口外观（透明度 / 置顶 / 点击穿透，设置面板改配置即时生效）
     mainWindow?.setOpacity(cfg.opacity);

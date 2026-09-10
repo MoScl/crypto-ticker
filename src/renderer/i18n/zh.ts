@@ -8,9 +8,9 @@ export const zh = {
   commonNormal: '正常',
   commonAbnormal: '异常',
   commonDegraded: '降级',
+  // 仅在「从未收到过行情数据」时使用（首次启动）；有数据后一律显示「X 前」，数据源未上报用 mainSrcStateConnecting
   commonWaiting: '等待数据…',
   commonMonitoring: '监控 {count} 个币种',
-  commonUpdatedAgo: '更新于 {time}前',
   commonDash: '—',
 
   // 数据源标签
@@ -106,11 +106,11 @@ export const zh = {
   netClickHint: '点击查看网络详情',
   netSrcText: '{label}（{state}）',
 
-  // 刷新时间
+  // 刷新时间（短语自带「前」，调用方不要再套「更新于…前」，否则会出现「刚刚前」）
   refreshJustNow: '刚刚',
-  refreshSec: '{n}秒',
-  refreshMin: '{n}分钟',
-  refreshHour: '{n}小时',
+  refreshSec: '{n}秒前',
+  refreshMin: '{n}分钟前',
+  refreshHour: '{n}小时前',
   refreshTitle: '距最近一次收到行情数据的时间',
 
   // 点击穿透逃生按钮

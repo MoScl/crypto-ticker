@@ -53,15 +53,16 @@ export function SettingsPanel({ onClose }: Props) {
       ? networkStatus.degraded ? 'degraded' : 'online'
       : 'degraded';
   const srcName = sourceStatus ? SOURCE_LABELS[sourceStatus.source]?.[lang] ?? sourceStatus.source : '';
+  // 与网络详情弹层保持一致：数据源未上报 → 「连接中…」；「等待数据…」只用于从未收到过行情数据
   const srcStateName = !sourceStatus
-    ? t('commonWaiting')
+    ? t('mainSrcStateConnecting')
     : !sourceStatus.ok
       ? t('commonAbnormal')
       : sourceStatus.degraded
         ? t('commonDegraded')
         : t('commonNormal');
   const srcText = !sourceStatus
-    ? t('commonWaiting')
+    ? t('mainSrcStateConnecting')
     : t('netSrcText', { label: srcName, state: srcStateName });
   const netTime = networkStatus
     ? new Date(networkStatus.ts).toLocaleTimeString('zh-CN', { hour12: false })

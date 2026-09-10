@@ -31,6 +31,23 @@ export const IPC = {
 // 全局快捷键：切换点击穿透。系统级注册，窗口隐藏/最小化/穿透态下均可用。
 export const CLICK_THROUGH_ACCELERATOR = 'CommandOrControl+Shift+X';
 
+/**
+ * Windows AppUserModelID（AUMID）。
+ * 必须与 electron-builder.yml 的 appId 完全一致：
+ * - 主进程在窗口创建前调用 app.setAppUserModelId() 注册
+ * - NSIS 安装脚本用 WinShell::SetLnkAUMI 把同一个 ID 写进快捷方式
+ * 两边一致，任务栏固定 / 跳转列表 / Toast 通知才会归属到本应用而不是其他 Electron 应用。
+ */
+export const APP_USER_MODEL_ID = 'com.cryptoticker.app';
+
+/**
+ * 极简模式切换时的窗口宽度（仅改宽度，高度与位置锚定右边缘）。
+ * 进入极简收窄到 MINIMAL_WINDOW_WIDTH，退出极简恢复到 NORMAL_WINDOW_WIDTH。
+ * 两个值都必须 >= windows.ts 里的 minWidth(160)，否则 setBounds 会被系统夹回。
+ */
+export const MINIMAL_WINDOW_WIDTH = 160;
+export const NORMAL_WINDOW_WIDTH = 240;
+
 // 数据源展示名（网络详情面板 / 状态栏使用，i18n 双语）
 export const SOURCE_LABELS: Record<string, { zh: string; en: string }> = {
   okx: { zh: 'OKX', en: 'OKX' },

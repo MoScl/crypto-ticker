@@ -315,7 +315,12 @@ export function MiniWindow() {
       <div className={minimalMode ? 'statusbar statusbar-top' : 'statusbar no-drag'}>
         <RefreshTime />
         <div className="statusbar-right">
-          <span className={`statusbar-src ${srcState}`}>{srcLabel}</span>
+          {/* 极简模式下 .src-text 被 CSS 隐藏，只留 .src-dot 圆点；
+              title 仍保留完整的「{交易所} {状态}」，信息不丢失 */}
+          <span className={`statusbar-src ${srcState}`} title={statusTitle}>
+            <i className="src-dot" />
+            <span className="src-text">{srcLabel}</span>
+          </span>
           {minimalMode && <StatusbarActions />}
         </div>
       </div>

@@ -35,6 +35,16 @@ function persist(config: AppConfig) {
   api.saveConfig(config);
 }
 
+/**
+ * 取 ticker 的有效时间戳。
+ * 主进程字段缺失/非法（undefined、NaN、0）时回退到本地当前时间——
+ * 否则 Math.max(0, undefined) = NaN，lastUpdateTs 会变成 NaN，
+ * `lastUpdateTs > 0` 恒为 false，界面就永远停在「等待数据…」即使价格已经显示出来了。
+ */
+function tickerTs(t: Ticker): number {
+  return typeof t.ts === 'number' && Number.isFinite(t.ts) && t.ts > 0 ? t.ts : Date.now();
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   config: structuredClone(DEFAULT_CONFIG),
   tickers: {},
@@ -105,17 +115,18 @@ export const useAppStore = create<AppState>((set, get) => ({
   applyTicker: (t) => {
     set((s) => ({
       tickers: { ...s.tickers, [t.symbol]: t },
-      lastUpdateTs: Math.max(s.lastUpdateTs, t.ts),
+      lastUpdateTs: Math.max(s.lastUpdateTs || 0, tickerTs(t)),
     }));
   },
 
   applySnapshot: (list) => {
     set((s) => {
       const next = { ...s.tickers };
-      let last = s.lastUpdateTs;
+      let last = s.lastUpdateTs || 0;
       for (const t of list) {
         next[t.symbol] = t;
-        if (t.ts > last) last = t.ts;
+        const ts = tickerTs(t);
+        if (ts > last) last = ts;
       }
       return { tickers: next, lastUpdateTs: last };
     });

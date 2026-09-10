@@ -678,6 +678,9 @@ body {
   white-space: nowrap;
 }
 .statusbar-src {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -685,6 +688,16 @@ body {
 .statusbar-src.bad { color: var(--down); }
 .statusbar-src.degraded { color: var(--accent); }
 .statusbar-src.pending { color: var(--text-dim); }
+/* 状态圆点：颜色直接继承父级 .statusbar-src 的 ok/bad/degraded/pending，
+   不再重复定义一套色值。非极简模式不显示（保持原有纯文本视觉）。 */
+.src-dot {
+  display: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: currentColor;
+}
 
 /* ===== 极简模式 ===== */
 /* 标题栏 / 操作条在极简模式淡出收起（平滑过渡，避免闪烁）。
@@ -734,6 +747,18 @@ body {
    「解锁穿透 / 退出极简」白名单按钮点击的干扰，确保按钮始终可点 */
 .app.ct-active .statusbar-top {
   -webkit-app-region: no-drag !important;
+}
+/* 极简模式：状态栏右上角的「{交易所} 正常」文本换成状态圆点。
+   用 display:none 而非 visibility——文本不生成盒子，不占宽度（配合 160px 最小宽度）；
+   圆点颜色沿用 .statusbar-src.ok/bad/degraded/pending，语义与颜色映射不变。 */
+.app.minimal .statusbar-src .src-text {
+  display: none;
+}
+.app.minimal .statusbar-src .src-dot {
+  display: inline-block;
+}
+.app.minimal .statusbar-src {
+  gap: 0;
 }
 
 /* ===== 穿透态交互白名单 =====
@@ -1038,6 +1063,14 @@ body {
 .coin-row.expanded .row-go {
   color: var(--accent);
   background: rgba(240, 185, 11, 0.12);
+}
+/* 极简模式：隐藏自选行的「跳转交易平台」箭头（.row-go）。
+   用 display:none 而不是 visibility/opacity——元素不生成盒子，
+   既不占自身 22px 宽度，也不产生父级 flex 的 8px gap，
+   价格/涨跌幅自动紧贴右侧 12px 内边距，窄窗口（最小 160px）下让出可用宽度。
+   功能本身保留：点击币种行仍会展开平台跳转条（PlatformBar），退出极简后箭头自动恢复。 */
+.app.minimal .coin-row.in-list .row-go {
+  display: none;
 }
 
 /* 平台跳转条（点击币种行展开） */
