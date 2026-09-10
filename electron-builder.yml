@@ -2,6 +2,29 @@ appId: com.cryptoticker.app
 productName: CryptoTicker
 copyright: Copyright © 2026
 
+# ===== 体积优化 =====
+# 只保留中英文语言包：Electron 默认带 55 个 locales/*.pak（约 37.4MB），
+# 应用 UI 是自绘的，只需要 zh-CN(452KB) + en-US(444KB)，解压后省约 36.5MB。
+# 影响面：Electron 内建 UI（原生右键菜单/原生对话框的少数字符串）在其它语言环境下降级为英文，
+# 应用自身文案不受影响（走自己的 i18n）。
+electronLanguages:
+  - zh-CN
+  - en-US
+# 安装包压缩等级：normal(默认) → maximum（LZMA 极限压缩），
+# 安装包小几 MB，代价是打包与安装稍慢。
+compression: maximum
+# 打包完成、压缩成安装包之前的清理钩子（删许可文本 / SwiftShader，见文件内开关）
+afterPack: build/afterPack.cjs
+# 运行时依赖（electron-store / ws / https-proxy-agent）都是纯 JS、无 native 模块，
+# 跳过 electron-builder 的 npm rebuild 步骤（只影响打包速度，不影响产物）
+npmRebuild: false
+# 另一项已做的瘦身：react / react-dom / zustand 移到 devDependencies。
+# 它们只在渲染层被 import，且已被 Vite 打进 dist/renderer/assets/*.js，
+# 主进程（electron-store / ws / https-proxy-agent）不需要。
+# 留在 dependencies 会让 electron-builder 把 react-dom 的 development / profiling /
+# server 全量构建一起塞进 app.asar（约 5.5MB 无用文件）。
+# ⚠️ 不要把这三个包挪回 dependencies，否则 asar 立刻涨回 7.6MB。
+
 directories:
   output: release
   buildResources: assets
@@ -36,10 +59,10 @@ win:
   # 而 NSIS 生成的快捷方式图标指向的就是 exe（CreateShortCut ... "$appExe" 0），
   # 所以 exe 图标 = 快捷方式图标。
   icon: assets/icon.ico
-  # 注意：不要再设 signAndEditExecutable: false ——那会让 rcedit 整段跳过，
-  # exe 保留 Electron 默认图标，安装后桌面/开始菜单快捷方式就会显示系统默认图标。
-  # （Windows 上 rcedit 走 app-builder 自带实现，不需要下载 winCodeSign。
-  #   若确实因环境报错，恢复该选项后快捷方式图标仍由 build/installer.nsh 兜底。）
+  # 本沙箱中 app-builder 的 sign/rcedit 步骤会失败（ERR_ELECTRON_BUILDER_CANNOT_EXECUTE），
+  # 故关闭 signAndEditExecutable：exe 自身保留 Electron 默认图标，
+  # 但安装后桌面/开始菜单快捷方式图标由 build/installer.nsh 用 resources/app.ico 显式重建，不受此影响。
+  signAndEditExecutable: false
 
 nsis:
   oneClick: false
@@ -60,12 +83,15 @@ nsis:
 #   npx electron-builder --mac
 # icon 用 1024x1024 PNG，electron-builder 会经 iconutil 自动转 icns。
 mac:
-  # dmg 目标会同时产出 release/mac-universal/CryptoTicker.app 和 release/*.dmg
+  # 只出 arm64（Apple Silicon）：universal 会把 x86_64 + arm64 两份 Chromium
+  # 打进同一个 .app，体积约为单架构的 2 倍。代价：不再支持 Intel Mac。
   target:
     - target: dmg
       arch:
-        - universal   # arm64 + x86_64 合一的单个通用二进制
-    - zip             # zip 备用分发格式（同 universal）
+        - arm64
+    - target: zip # electron-updater 自动更新需要（latest-mac.yml 指向它）
+      arch:
+        - arm64
   icon: assets/icon.png
   category: public.app-category.finance
   # 最低支持 macOS 11 (Big Sur)——必须是字符串，数字会导致 LaunchServices 启动崩溃

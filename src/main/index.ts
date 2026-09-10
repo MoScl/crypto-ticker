@@ -55,6 +55,13 @@ function openExternalSafe(raw: unknown): void {
 // P8：高 DPI 适配（125% / 150% 缩放下显示正常）
 app.commandLine.appendSwitch('high-dpi-support', '1');
 
+// 打包时删掉了 SwiftShader（build/afterPack.cjs 的 STRIP_SWIFTSHADER，省约 13MB），
+// 即 Chromium 失去"无 GPU 时回退到 SwiftShader 软件渲染"的能力。
+// 这里主动禁用硬件加速，让所有环境统一走 CPU 软件合成，避免无 GPU 环境
+// （虚拟机 / 远程桌面 / 云桌面）启动时黑屏或崩溃。
+// ⚠️ 若发现透明窗口异常、动画掉帧，注释掉本行并把 afterPack 的 STRIP_SWIFTSHADER 改回 false。
+app.disableHardwareAcceleration();
+
 // Windows：注册 AppUserModelID。必须在创建任何 BrowserWindow 之前调用，
 // 否则任务栏分组 / 通知 / 跳转列表会被归到默认的 Electron 分组。
 // ID 与 electron-builder.yml 的 appId、NSIS 快捷方式写入的 AUMI 三者保持一致。
